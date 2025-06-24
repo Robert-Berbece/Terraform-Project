@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation version of the Terrafomr cyber 
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.10.0.0/16
+      Tags:
+        - Key: Name
+          Value: cyber_vpc
+
+  SubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.10.1.0/24
+      AvailabilityZone: eu-west-1a
+      Tags:
+        - Key: Name
+          Value: subnet_C
+
+  SubnetD:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.10.2.0/24
+      AvailabilityZone: eu-west-1b
+      Tags:
+        - Key: Name
+          Value: subnet_D
+
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Cloudformation edition - Allow SSH between EC2s in different subnets
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: cloudformation_ssh
+
+  SSHIngressC:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SSHSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 10.10.1.0/24
+
+  SSHIngressD:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SSHSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 10.10.2.0/24
+
+  SGOutboundAllowAll:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref SSHSecurityGroup
+      IpProtocol: "-1"
+      CidrIp: 0.0.0.0/0
+
+  NodeCInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: eu-west-1a
+      InstanceType: t3.micro
+      ImageId: ami-0db1de538d84beea0
+      SubnetId: !Ref SubnetC
+      SecurityGroupIds:
+        - !Ref SSHSecurityGroup
+      Tags:
+        - Key: Name
+          Value: nodeC
+
+  NodeDInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: eu-west-1b
+      InstanceType: t3.micro
+      ImageId: ami-0db1de538d84beea0
+      SubnetId: !Ref SubnetD
+      SecurityGroupIds:
+        - !Ref SSHSecurityGroup
+      Tags:
+        - Key: Name
+          Value: nodeD
+
